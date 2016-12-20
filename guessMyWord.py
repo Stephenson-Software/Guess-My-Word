@@ -33,5 +33,5 @@ while guesses > 0:
 		won = True
 		
 if won == False:
-	print "\NThe word was %s" % wordToGuess
+	print "\nThe word was %s" % wordToGuess
 	
