@@ -7,6 +7,12 @@ Run the game from the repository root with Python 3. There are no third-party de
 python3 src/guessMyWord.py
 ```
 
+## Testing
+The test suite uses the standard library's `unittest` module and is run from the repository root.
+```
+python3 -m unittest discover -s tests -t .
+```
+
 ## Support
 You can find the support discord server [here](https://discord.gg/49J4RHQxhy).
 
