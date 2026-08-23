@@ -16,9 +16,9 @@ class GuessMyWord:
 
 			print(self.words)
 
-			next = input("\n> ")
+			guess = input("\n> ")
 
-			if len(next) != 4:
+			if len(guess) != 4:
 				print("That isn't four characters long!")
 				self.guesses =- 1
 				continue
@@ -26,7 +26,7 @@ class GuessMyWord:
 			incommon = 0
 			y = 0
 			for c in wordToGuess:
-				if next[y] == c:
+				if guess[y] == c:
 					incommon =+ 1
 				y = y + 1
 
@@ -41,5 +41,6 @@ class GuessMyWord:
 		if won == False:
 			print("\nThe word was", wordToGuess)
 
-guessMyWord = GuessMyWord()
-guessMyWord.run()
+if __name__ == "__main__":
+	guessMyWord = GuessMyWord()
+	guessMyWord.run()
