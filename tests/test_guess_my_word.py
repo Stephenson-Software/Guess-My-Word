@@ -57,14 +57,18 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["FOUR"] * 5)
 		self.assertIn("That had 0 characters in common.", output)
 
-	def test_exact_guess_does_not_win(self):
-		"""Characterization of issue #6: 'incommon =+ 1' never accumulates, so the win
-		branch is unreachable and even the exact word reports a count of 1.
-		Flip these assertions when issue #6 is fixed."""
+	def test_exact_guess_wins(self):
+		"""Regression guard for issue #6: the accumulated count reaches 4 on the exact
+		word, which takes the win branch."""
 		output = playGame(["DICE"] * 5)
-		self.assertIn("That had 1 characters in common.", output)
-		self.assertNotIn("You got the word!", output)
-		self.assertIn("The word was DICE", output)
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertNotIn("The word was DICE", output)
+
+	def test_partial_match_accumulates_beyond_one(self):
+		"""Regression guard for issue #6: 'LIKE' shares the positional 'I' and 'E' with
+		'DICE', so two matches must be reported rather than the overwritten one."""
+		output = playGame(["LIKE"] * 5)
+		self.assertIn("That had 2 characters in common.", output)
 
 	def test_wrong_length_guess_ends_the_game(self):
 		"""Characterization of issue #7: 'self.guesses =- 1' assigns -1 rather than
