@@ -27,7 +27,7 @@ class GuessMyWord:
 			y = 0
 			for c in wordToGuess:
 				if guess[y] == c:
-					incommon =+ 1
+					incommon += 1
 				y = y + 1
 
 			if incommon < 4:
