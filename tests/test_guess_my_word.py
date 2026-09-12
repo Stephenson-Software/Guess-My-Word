@@ -70,13 +70,14 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["LIKE"] * 5)
 		self.assertIn("That had 2 characters in common.", output)
 
-	def test_wrong_length_guess_ends_the_game(self):
-		"""Characterization of issue #7: 'self.guesses =- 1' assigns -1 rather than
-		decrementing, so a short guess ends the run outright.
-		Flip these assertions when issue #7 is fixed."""
-		output = playGame(["AB"])
+	def test_wrong_length_guess_costs_one_guess(self):
+		"""Regression guard for issue #7: a short guess costs exactly one guess rather
+		than ending the run, so the remaining turns stay playable."""
+		output = playGame(["AB", "DICE"])
 		self.assertIn("That isn't four characters long!", output)
-		self.assertIn("The word was DICE", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertNotIn("The word was DICE", output)
 
 	def test_lowercase_guess_never_matches(self):
 		"""Characterization of issue #8: guesses are compared to an uppercase word list

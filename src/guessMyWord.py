@@ -20,7 +20,7 @@ class GuessMyWord:
 
 			if len(guess) != 4:
 				print("That isn't four characters long!")
-				self.guesses =- 1
+				self.guesses -= 1
 				continue
 			
 			incommon = 0
