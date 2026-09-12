@@ -1,5 +1,5 @@
 # Guess-My-Word
-You must attempt to guess which word is the correct one. When giving your guess, you're told how many characters the word you guessed have in common with the right word.
+You must attempt to guess which word is the correct one. When giving your guess, you're told how many characters of your guess are the correct character in the correct position. A guess that isn't four characters long costs one guess, and you have five guesses in total.
 
 ## Usage
 Run the game from the repository root with Python 3. There are no third-party dependencies — only the standard library is used.
