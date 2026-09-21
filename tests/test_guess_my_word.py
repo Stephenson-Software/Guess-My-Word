@@ -79,12 +79,18 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("The word was DICE", output)
 
-	def test_lowercase_guess_never_matches(self):
-		"""Characterization of issue #8: guesses are compared to an uppercase word list
-		with no normalization. Flip these assertions when issue #8 is fixed."""
+	def test_lowercase_guess_wins(self):
+		"""Regression guard for issue #8: the guess is upper-cased before comparison, so
+		a lowercase spelling of the word wins rather than scoring zero."""
 		output = playGame(["dice"] * 5)
-		self.assertIn("That had 0 characters in common.", output)
-		self.assertNotIn("You got the word!", output)
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertNotIn("That had 0 characters in common.", output)
+
+	def test_mixed_case_partial_match_is_scored(self):
+		"""Regression guard for issue #8: 'LiKe' shares the positional 'i' and 'e' with
+		'DICE' only once normalized, so two matches are reported rather than zero."""
+		output = playGame(["LiKe"] * 5)
+		self.assertIn("That had 2 characters in common.", output)
 
 
 if __name__ == "__main__":

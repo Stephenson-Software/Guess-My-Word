@@ -16,7 +16,7 @@ class GuessMyWord:
 
 			print(self.words)
 
-			guess = input("\n> ")
+			guess = input("\n> ").upper()
 
 			if len(guess) != 4:
 				print("That isn't four characters long!")
