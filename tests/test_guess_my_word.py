@@ -92,6 +92,13 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["LiKe"] * 5)
 		self.assertIn("That had 2 characters in common.", output)
 
+	def test_end_of_input_ends_game_cleanly(self):
+		"""Regression guard for issue #9: running out of input after one guess ends the
+		game with the closing message rather than raising EOFError."""
+		output = playGame(["LIKE", EOFError()])
+		self.assertIn("That had 2 characters in common.", output)
+		self.assertIn("The word was DICE", output)
+
 
 if __name__ == "__main__":
 	unittest.main()
