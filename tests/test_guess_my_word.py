@@ -99,6 +99,13 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("That had 2 characters in common.", output)
 		self.assertIn("The word was DICE", output)
 
+	def test_interrupt_ends_game_cleanly(self):
+		"""Regression guard for issue #21: pressing Ctrl-C at the prompt ends the game
+		with the closing message rather than raising KeyboardInterrupt."""
+		output = playGame(["LIKE", KeyboardInterrupt()])
+		self.assertIn("That had 2 characters in common.", output)
+		self.assertIn("The word was DICE", output)
+
 
 if __name__ == "__main__":
 	unittest.main()

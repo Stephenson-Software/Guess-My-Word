@@ -6,7 +6,7 @@ Run the game from the repository root with Python 3. There are no third-party de
 ```
 python3 src/guessMyWord.py
 ```
-Ending input (Ctrl-D, or the end of piped input) ends the game early and reveals the word.
+Ending input (Ctrl-D, or the end of piped input) or pressing Ctrl-C ends the game early and reveals the word.
 
 ## Testing
 The test suite uses the standard library's `unittest` module and is run from the repository root.
