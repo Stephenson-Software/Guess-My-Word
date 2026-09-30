@@ -92,6 +92,13 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["LiKe"] * 5)
 		self.assertIn("That had 2 characters in common.", output)
 
+	def test_whitespace_padded_guess_wins(self):
+		"""Regression guard for issue #22: surrounding whitespace is stripped before the
+		length check, so a padded exact guess wins rather than costing a guess."""
+		output = playGame([" dice "] * 5)
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertNotIn("That isn't four characters long!", output)
+
 	def test_end_of_input_ends_game_cleanly(self):
 		"""Regression guard for issue #9: running out of input after one guess ends the
 		game with the closing message rather than raising EOFError."""

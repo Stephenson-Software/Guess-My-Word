@@ -17,7 +17,7 @@ class GuessMyWord:
 			print(self.words)
 
 			try:
-				guess = input("\n> ").upper()
+				guess = input("\n> ").strip().upper()
 			except (EOFError, KeyboardInterrupt):
 				print()
 				break
