@@ -1,0 +1,53 @@
+# The browser version (tak's console runtime) and its deploy to arcade
+# (https://github.com/Stephenson-Software/arcade, RFC 0006), where it is served at
+# https://guess-my-word.play.danielstephenson.dev.
+#
+# Every pull request builds the bundle. A push to master deploys it once the
+# org variable ARCADE_ENABLED is 'true' (or by hand: Actions -> Run workflow).
+# Each deploy is version.txt plus the commit, so every push is a new, immutable
+# arcade version; rollback is arcade's POST /api/games/guess-my-word/current.
+name: Browser build
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tak (bundle builder + console runtime)
+        run: pip install "tak @ git+https://github.com/Stephenson-Software/tak@12e63e7e51eabdbe2bbd87a950cdc5e61f61be1d"
+      - name: The game's own tests
+        run: python3 -m unittest discover -s tests -t .
+      - name: Build the browser bundle
+        run: python3 web/build_zip.py
+      - name: The bundle holds the game and the console runtime
+        run: |
+          python3 - <<'EOF'
+          import zipfile
+          names = set(zipfile.ZipFile("web/game.zip").namelist())
+          for required in ('src/guessMyWord.py', "src/tak/web/assets/console-worker.js", "src/tak/web/assets/boot.js"):
+              assert required in names, (required, sorted(names))
+          page = open("web/index.html").read()
+          assert "TakConsole.start(" in page and 'src/guessMyWord.py' in page
+          print("bundle OK:", len(names), "files")
+          EOF
+      - name: Version this build (version.txt + commit)
+        run: echo "$(tr -d '[:space:]' < version.txt)+g${GITHUB_SHA::7}" > web/version.txt
+      - name: Deploy to arcade
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && vars.ARCADE_ENABLED == 'true')
+        uses: Stephenson-Software/arcade-deploy@v1
+        with:
+          slug: guess-my-word
+          token: ${{ secrets.ARCADE_TOKEN }}
+          version-file: web/version.txt
