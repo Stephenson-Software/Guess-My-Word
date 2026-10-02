@@ -70,6 +70,21 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["LIKE"] * 5)
 		self.assertIn("That had 2 characters in common.", output)
 
+	def test_single_match_uses_singular_noun(self):
+		"""Regression guard for issue #27: 'DOOR' shares only the positional 'D' with
+		'DICE', so the count reads '1 character' rather than '1 characters'."""
+		output = playGame(["DOOR"] * 5)
+		self.assertIn("That had 1 character in common.", output)
+		self.assertNotIn("1 characters", output)
+
+	def test_last_guess_uses_singular_noun(self):
+		"""Regression guard for issue #27: the final turn reads '1 guess' rather than
+		'1 guesses', while earlier turns keep the plural."""
+		output = playGame(["FOUR"] * 5)
+		self.assertIn("You have 1 guess.", output)
+		self.assertIn("You have 2 guesses.", output)
+		self.assertNotIn("1 guesses", output)
+
 	def test_wrong_length_guess_costs_one_guess(self):
 		"""Regression guard for issue #7: a short guess costs exactly one guess rather
 		than ending the run, so the remaining turns stay playable."""
