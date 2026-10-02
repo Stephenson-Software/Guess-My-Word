@@ -12,7 +12,8 @@ class GuessMyWord:
 		wordToGuess = self.words[(randint(0, len(self.words) - 1))]
 		won = False
 		while self.guesses > 0:
-			print("\nThe word can be any of these. Make your guess. You have", self.guesses,"guesses.\n")
+			guessNoun = "guess" if self.guesses == 1 else "guesses"
+			print("\nThe word can be any of these. Make your guess. You have", self.guesses, guessNoun + ".\n")
 
 			print(self.words)
 
@@ -35,7 +36,8 @@ class GuessMyWord:
 				y = y + 1
 
 			if incommon < 4:
-				print("\nThat had", incommon, "characters in common.")
+				characterNoun = "character" if incommon == 1 else "characters"
+				print("\nThat had", incommon, characterNoun, "in common.")
 				self.guesses = self.guesses - 1
 			elif incommon == 4:
 				print("\nYou got the word! It was", wordToGuess) 
