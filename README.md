@@ -1,4 +1,7 @@
 # Guess-My-Word
+
+[![Play in your browser](https://img.shields.io/badge/Play-in%20your%20browser-2ea44f)](https://danielstephenson.dev/play/guess-my-word)
+
 You must attempt to guess which word is the correct one. When giving your guess, you're told how many characters of your guess are the correct character in the correct position. Spaces before or after a guess are ignored. A guess that isn't four characters long costs one guess, and you have five guesses in total. Guesses are not case-sensitive, so `dice` and `DICE` are treated the same.
 
 ## Usage
