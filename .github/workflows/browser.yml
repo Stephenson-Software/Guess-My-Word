@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install tak (bundle builder + console runtime)
-        run: pip install "tak @ git+https://github.com/Stephenson-Software/tak@4606f1d1f0956713c293662de7cd89d3836a7c7b"
+        run: pip install "tak @ git+https://github.com/Stephenson-Software/tak@eedf89fe142221c430787837d43d29d3ccfa7f07"
       - name: The game's own tests
         run: python3 -m unittest discover -s tests -t .
       - name: Build the browser bundle
