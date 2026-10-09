@@ -114,6 +114,31 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("That isn't four characters long!", output)
 
+	def test_five_misses_end_game_revealing_word(self):
+		"""Five scored misses spend every guess: the word is revealed and a sixth input,
+		the exact word, is never read (it would otherwise win)."""
+		output = playGame(["FOUR", "LIKE", "DOOR", "WHAT", "COKE", "DICE"])
+		self.assertIn("You have 1 guess.", output)
+		self.assertIn("The word was DICE", output)
+		self.assertNotIn("You got the word!", output)
+		self.assertEqual(output.count("Make your guess."), 5)
+
+	def test_wrong_length_guesses_alone_exhaust_game(self):
+		"""Each wrong-length guess costs one guess, so five of them end the game with the
+		word revealed before the sixth input, the exact word, is read."""
+		output = playGame(["AB"] * 5 + ["DICE"])
+		self.assertEqual(output.count("That isn't four characters long!"), 5)
+		self.assertIn("The word was DICE", output)
+		self.assertNotIn("You got the word!", output)
+
+	def test_win_stops_prompting(self):
+		"""A win on the second guess ends the game: no further prompt is shown and the
+		losing message is not printed."""
+		output = playGame(["FOUR", "DICE", "FOUR"])
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertEqual(output.count("Make your guess."), 2)
+		self.assertNotIn("The word was DICE", output)
+
 	def test_end_of_input_ends_game_cleanly(self):
 		"""Regression guard for issue #9: running out of input after one guess ends the
 		game with the closing message rather than raising EOFError."""
