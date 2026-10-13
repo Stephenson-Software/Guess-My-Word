@@ -23,6 +23,28 @@ def playGame(guesses, wordIndex=0):
 	return buffer.getvalue()
 
 
+def runScript(stdin):
+	"""Run src/guessMyWord.py as a script with the given stdin, returning its output."""
+	result = subprocess.run(
+		[sys.executable, "-B", os.path.join(SRC_DIR, "guessMyWord.py")],
+		input=stdin.encode(),
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		timeout=30,
+	)
+	if result.returncode != 0 or result.stderr:
+		raise AssertionError("script failed: " + result.stderr.decode())
+	return result.stdout.decode()
+
+
+def revealedWord(output):
+	"""Return the word named by the closing 'The word was' line."""
+	lastLine = output.rstrip().rpartition("\n")[2]
+	if not lastLine.startswith("The word was "):
+		raise AssertionError("no closing 'The word was' line: " + repr(lastLine))
+	return lastLine[len("The word was "):]
+
+
 # @author Daniel McCoy Stephenson
 # @since August 2026
 class TestGuessMyWord(unittest.TestCase):
@@ -40,6 +62,21 @@ class TestGuessMyWord(unittest.TestCase):
 		)
 		self.assertEqual(result.returncode, 0, result.stderr.decode())
 		self.assertEqual(result.stdout.decode(), "")
+
+	def test_script_plays_to_completion_from_piped_input(self):
+		"""Running src/guessMyWord.py as a script, the entry point the README, the VS
+		Code launch config and the browser bundle all use, plays a whole game through
+		the real input(): five wrong-length guesses end it with the word revealed."""
+		output = runScript("AB\n" * 5)
+		self.assertEqual(output.count("That isn't four characters long!"), 5)
+		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
+
+	def test_script_ends_cleanly_on_empty_input(self):
+		"""With no input at all, the real input() hits end-of-file on the first prompt
+		and the script exits normally with the word revealed, without a traceback."""
+		output = runScript("")
+		self.assertNotIn("That isn't four characters long!", output)
+		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
 	def test_constructor_sets_five_guesses(self):
 		self.assertEqual(guessMyWord.GuessMyWord().guesses, 5)
