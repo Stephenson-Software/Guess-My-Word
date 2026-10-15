@@ -176,6 +176,14 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertEqual(output.count("Make your guess."), 2)
 		self.assertNotIn("The word was DICE", output)
 
+	def test_empty_guess_costs_one_guess(self):
+		"""Pressing Enter without a guess is a wrong-length guess: it costs one guess and
+		the next prompt still accepts a winning guess."""
+		output = playGame(["", "DICE"])
+		self.assertIn("That isn't four characters long!", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertIn("You got the word! It was DICE", output)
+
 	def test_end_of_input_ends_game_cleanly(self):
 		"""Regression guard for issue #9: running out of input after one guess ends the
 		game with the closing message rather than raising EOFError."""
