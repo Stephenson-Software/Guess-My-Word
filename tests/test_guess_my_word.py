@@ -90,6 +90,29 @@ class TestGuessMyWord(unittest.TestCase):
 	def test_word_list_is_not_empty(self):
 		self.assertGreater(len(guessMyWord.GuessMyWord().words), 0)
 
+	def test_word_draw_reaches_first_and_last_word(self):
+		"""The word is drawn with randint, whose bounds are both inclusive: its lowest
+		and highest values pick the first and last words rather than indexing past the
+		end of the list."""
+		words = guessMyWord.GuessMyWord().words
+		for bound, expected in ((min, words[0]), (max, words[-1])):
+			with self.subTest(expected=expected):
+				buffer = io.StringIO()
+				with patch("guessMyWord.randint", side_effect=bound):
+					with patch("builtins.input", side_effect=[EOFError()]):
+						with contextlib.redirect_stdout(buffer):
+							guessMyWord.GuessMyWord().run()
+				self.assertEqual(revealedWord(buffer.getvalue()), expected)
+
+	def test_off_list_guess_is_scored_and_costs_one_guess(self):
+		"""A four-character guess that is not in the word list is still accepted: 'DUCK'
+		is scored positionally against 'DICE' (the 'D' and 'C') and costs one guess."""
+		self.assertNotIn("DUCK", guessMyWord.GuessMyWord().words)
+		output = playGame(["DUCK", "DICE"])
+		self.assertIn("That had 2 characters in common.", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertIn("You got the word! It was DICE", output)
+
 	def test_no_matching_characters_reports_zero(self):
 		output = playGame(["FOUR"] * 5)
 		self.assertIn("That had 0 characters in common.", output)
