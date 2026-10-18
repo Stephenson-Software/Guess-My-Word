@@ -130,6 +130,19 @@ class TestGuessMyWord(unittest.TestCase):
 		output = playGame(["LIKE"] * 5)
 		self.assertIn("That had 2 characters in common.", output)
 
+	def test_anagram_scores_zero_because_scoring_is_positional(self):
+		"""Regression guard for issue #17: 'ECID' holds every letter of 'DICE' but none in
+		its position, so it scores 0 rather than the 4 a letter-overlap count would give."""
+		output = playGame(["ECID"] * 5)
+		self.assertIn("That had 0 characters in common.", output)
+		self.assertNotIn("You got the word!", output)
+
+	def test_repeated_letter_counts_only_positional_match(self):
+		"""'EEEE' matches 'DICE' only at the last position, so it scores 1 rather than
+		counting the 'E' once per repetition."""
+		output = playGame(["EEEE"] * 5)
+		self.assertIn("That had 1 character in common.", output)
+
 	def test_single_match_uses_singular_noun(self):
 		"""Regression guard for issue #27: 'DOOR' shares only the positional 'D' with
 		'DICE', so the count reads '1 character' rather than '1 characters'."""
@@ -190,6 +203,14 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertEqual(output.count("That isn't four characters long!"), 5)
 		self.assertIn("The word was DICE", output)
 		self.assertNotIn("You got the word!", output)
+
+	def test_win_on_final_guess_is_a_win(self):
+		"""The exact word on the fifth and last guess wins: the loop scores it before the
+		guesses run out, so the word is not revealed as a loss."""
+		output = playGame(["FOUR", "LIKE", "DOOR", "WHAT", "DICE"])
+		self.assertIn("You have 1 guess.", output)
+		self.assertIn("You got the word! It was DICE", output)
+		self.assertNotIn("The word was DICE", output)
 
 	def test_win_stops_prompting(self):
 		"""A win on the second guess ends the game: no further prompt is shown and the
