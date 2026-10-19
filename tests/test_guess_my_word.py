@@ -187,6 +187,23 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("That isn't four characters long!", output)
 
+	def test_length_is_checked_before_case_mapping(self):
+		"""Regression guard for issue #37: 'ß' upper-cases to 'SS', so the length is checked
+		on the guess as typed. The three-character 'ßce' costs a guess as the wrong length
+		instead of being scored as 'SSCE'."""
+		output = playGame(["ßce", "DICE"])
+		self.assertIn("That isn't four characters long!", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertNotIn("in common", output)
+
+	def test_case_mapping_keeps_characters_in_position(self):
+		"""Regression guard for issue #37: the four-character 'ßICE' is scored rather than
+		rejected as 'SSICE', and its 'I', 'C' and 'E' stay in the positions they were typed
+		in, so three matches are reported."""
+		output = playGame(["ßICE"] * 5)
+		self.assertNotIn("That isn't four characters long!", output)
+		self.assertIn("That had 3 characters in common.", output)
+
 	def test_five_misses_end_game_revealing_word(self):
 		"""Five scored misses spend every guess: the word is revealed and a sixth input,
 		the exact word, is never read (it would otherwise win)."""
