@@ -18,7 +18,7 @@ class GuessMyWord:
 			print(self.words)
 
 			try:
-				guess = input("\n> ").strip().upper()
+				guess = input("\n> ").strip()
 			except (EOFError, KeyboardInterrupt):
 				print()
 				break
@@ -31,7 +31,7 @@ class GuessMyWord:
 			incommon = 0
 			y = 0
 			for c in wordToGuess:
-				if guess[y] == c:
+				if guess[y].upper() == c:
 					incommon += 1
 				y = y + 1
 
