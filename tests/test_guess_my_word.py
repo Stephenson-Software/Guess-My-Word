@@ -107,7 +107,7 @@ class TestGuessMyWord(unittest.TestCase):
 	def test_word_list_is_shown_before_every_guess(self):
 		"""'The word can be any of these.' is followed by the candidate words on every
 		turn, so the list the player picks from is printed once per prompt, after the
-		turn header and before the guess is read."""
+		turn header and before the guess is scored."""
 		words = guessMyWord.GuessMyWord().words
 		output = playGame(["FOUR", "LIKE", "DOOR", "WHAT", "COKE"])
 		self.assertEqual(output.count(str(words)), 5)
