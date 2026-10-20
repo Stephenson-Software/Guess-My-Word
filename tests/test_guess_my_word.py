@@ -104,6 +104,16 @@ class TestGuessMyWord(unittest.TestCase):
 							guessMyWord.GuessMyWord().run()
 				self.assertEqual(revealedWord(buffer.getvalue()), expected)
 
+	def test_word_list_is_shown_before_every_guess(self):
+		"""'The word can be any of these.' is followed by the candidate words on every
+		turn, so the list the player picks from is printed once per prompt, after the
+		turn header and before the guess is read."""
+		words = guessMyWord.GuessMyWord().words
+		output = playGame(["FOUR", "LIKE", "DOOR", "WHAT", "COKE"])
+		self.assertEqual(output.count(str(words)), 5)
+		for turn in output.split("The word can be any of these.")[1:]:
+			self.assertIn(str(words), turn.partition("in common.")[0])
+
 	def test_off_list_guess_is_scored_and_costs_one_guess(self):
 		"""A four-character guess that is not in the word list is still accepted: 'DUCK'
 		is scored positionally against 'DICE' (the 'D' and 'C') and costs one guess."""
