@@ -177,6 +177,17 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("The word was DICE", output)
 
+	def test_over_long_guess_costs_one_guess(self):
+		"""A guess longer than four characters is the wrong length too: 'DICES' begins with
+		'DICE' but costs one guess rather than being scored on its first four characters
+		and winning, and the next prompt still accepts the word."""
+		output = playGame(["DICES", "DICE"])
+		self.assertIn("That isn't four characters long!", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertEqual(output.count("Make your guess."), 2)
+		self.assertNotIn("in common", output)
+		self.assertIn("You got the word! It was DICE", output)
+
 	def test_lowercase_guess_wins(self):
 		"""Regression guard for issue #8: the guess is upper-cased before comparison, so
 		a lowercase spelling of the word wins rather than scoring zero."""
