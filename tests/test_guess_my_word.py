@@ -208,6 +208,15 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("That isn't four characters long!", output)
 
+	def test_inner_space_is_kept_and_scored(self):
+		"""Only surrounding whitespace is stripped: the space in 'D CE' stays, so the guess is
+		four characters long and is scored against 'DICE' with the space as a miss, giving
+		three matches rather than being rejected or collapsed to 'DCE'."""
+		output = playGame(["D CE"] * 5)
+		self.assertNotIn("That isn't four characters long!", output)
+		self.assertIn("That had 3 characters in common.", output)
+		self.assertNotIn("You got the word!", output)
+
 	def test_length_is_checked_before_case_mapping(self):
 		"""Regression guard for issue #37: 'ß' upper-cases to 'SS', so the length is checked
 		on the guess as typed. The three-character 'ßce' costs a guess as the wrong length
