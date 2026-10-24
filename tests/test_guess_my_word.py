@@ -168,6 +168,19 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You have 2 guesses.", output)
 		self.assertNotIn("1 guesses", output)
 
+	def test_turn_header_counts_down_from_five(self):
+		"""The README promises five guesses in total: the first turn header shows 5, and
+		each scored miss lowers the next header by exactly one, down to 1."""
+		output = playGame(["FOUR", "LIKE", "DOOR", "WHAT", "COKE"])
+		headers = [line for line in output.splitlines() if line.startswith("The word can be any of these.")]
+		self.assertEqual(headers, [
+			"The word can be any of these. Make your guess. You have 5 guesses.",
+			"The word can be any of these. Make your guess. You have 4 guesses.",
+			"The word can be any of these. Make your guess. You have 3 guesses.",
+			"The word can be any of these. Make your guess. You have 2 guesses.",
+			"The word can be any of these. Make your guess. You have 1 guess.",
+		])
+
 	def test_wrong_length_guess_costs_one_guess(self):
 		"""Regression guard for issue #7: a short guess costs exactly one guess rather
 		than ending the run, so the remaining turns stay playable."""
