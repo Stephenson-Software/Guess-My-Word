@@ -90,6 +90,13 @@ class TestGuessMyWord(unittest.TestCase):
 	def test_word_list_is_not_empty(self):
 		self.assertGreater(len(guessMyWord.GuessMyWord().words), 0)
 
+	def test_word_list_has_no_duplicates(self):
+		"""The word is drawn by index, so a repeated entry would be drawn twice as often as
+		the others and would be shown twice in the list printed before every guess."""
+		words = guessMyWord.GuessMyWord().words
+		repeated = sorted({word for word in words if words.count(word) > 1})
+		self.assertEqual(repeated, [])
+
 	def test_word_draw_reaches_first_and_last_word(self):
 		"""The word is drawn with randint, whose bounds are both inclusive: its lowest
 		and highest values pick the first and last words rather than indexing past the
