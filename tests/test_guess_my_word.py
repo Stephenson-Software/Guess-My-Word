@@ -141,6 +141,16 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 		self.assertNotIn("The word was DICE", output)
 
+	def test_win_is_announced_rather_than_scored(self):
+		"""Four matches take the win branch instead of the score branch: the exact word is
+		announced as the last line of output, with no 'That had 4 characters in common.'
+		line reported for it, while the miss before it is still scored."""
+		output = playGame(["FOUR", "DICE"])
+		self.assertEqual(output.count("in common."), 1)
+		self.assertIn("That had 0 characters in common.", output)
+		self.assertNotIn("That had 4", output)
+		self.assertEqual(output.rstrip().rpartition("\n")[2], "You got the word! It was DICE")
+
 	def test_partial_match_accumulates_beyond_one(self):
 		"""Regression guard for issue #6: 'LIKE' shares the positional 'I' and 'E' with
 		'DICE', so two matches must be reported rather than the overwritten one."""
