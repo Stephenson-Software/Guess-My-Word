@@ -23,13 +23,14 @@ def playGame(guesses, wordIndex=0):
 	return buffer.getvalue()
 
 
-def runScript(stdin):
-	"""Run src/guessMyWord.py as a script with the given stdin, returning its output."""
+def runScript(stdin, environment=None):
+	"""Run src/guessMyWord.py as a script with the given stdin bytes, returning its output."""
 	result = subprocess.run(
 		[sys.executable, "-B", os.path.join(SRC_DIR, "guessMyWord.py")],
-		input=stdin.encode(),
+		input=stdin,
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
+		env=environment,
 		timeout=30,
 	)
 	if result.returncode != 0 or result.stderr:
@@ -67,15 +68,25 @@ class TestGuessMyWord(unittest.TestCase):
 		"""Running src/guessMyWord.py as a script, the entry point the README, the VS
 		Code launch config and the browser bundle all use, plays a whole game through
 		the real input(): five wrong-length guesses end it with the word revealed."""
-		output = runScript("AB\n" * 5)
+		output = runScript(b"AB\n" * 5)
 		self.assertEqual(output.count("That isn't four characters long!"), 5)
 		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
 	def test_script_ends_cleanly_on_empty_input(self):
 		"""With no input at all, the real input() hits end-of-file on the first prompt
 		and the script exits normally with the word revealed, without a traceback."""
-		output = runScript("")
+		output = runScript(b"")
 		self.assertNotIn("That isn't four characters long!", output)
+		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
+
+	def test_script_survives_undecodable_input(self):
+		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so a strict stdin
+		decoder fails inside the real input(). The script exits normally with the word
+		revealed instead of ending in a UnicodeDecodeError traceback."""
+		environment = dict(os.environ)
+		environment["PYTHONIOENCODING"] = "utf-8:strict"
+		output = runScript(b"\xff\n", environment)
+		self.assertEqual(output.count("That isn't four characters long!"), 1)
 		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
 	def test_constructor_sets_five_guesses(self):
@@ -301,6 +312,15 @@ class TestGuessMyWord(unittest.TestCase):
 		"""Pressing Enter without a guess is a wrong-length guess: it costs one guess and
 		the next prompt still accepts a winning guess."""
 		output = playGame(["", "DICE"])
+		self.assertIn("That isn't four characters long!", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertIn("You got the word! It was DICE", output)
+
+	def test_undecodable_guess_costs_one_guess(self):
+		"""Regression guard for issue #53: a line that cannot be decoded is not a four-character
+		guess, so it costs one guess and the next prompt still accepts a winning guess."""
+		undecodable = UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+		output = playGame([undecodable, "DICE"])
 		self.assertIn("That isn't four characters long!", output)
 		self.assertIn("You have 4 guesses.", output)
 		self.assertIn("You got the word! It was DICE", output)
