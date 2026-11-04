@@ -19,6 +19,8 @@ class GuessMyWord:
 
 			try:
 				guess = input("\n> ").strip()
+			except UnicodeDecodeError:
+				guess = ""
 			except (EOFError, KeyboardInterrupt):
 				print()
 				break
