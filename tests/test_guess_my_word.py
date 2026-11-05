@@ -80,14 +80,40 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
 	def test_script_survives_undecodable_input(self):
-		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so a strict stdin
-		decoder fails inside the real input(). The script exits normally with the word
-		revealed instead of ending in a UnicodeDecodeError traceback."""
+		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
+		the real input() must not raise even where stdin is strict by default. The script
+		exits normally with the word revealed instead of ending in a traceback."""
 		environment = dict(os.environ)
 		environment["PYTHONIOENCODING"] = "utf-8:strict"
 		output = runScript(b"\xff\n", environment)
 		self.assertEqual(output.count("That isn't four characters long!"), 1)
 		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
+
+	def test_script_keeps_lines_piped_around_undecodable_input(self):
+		"""Regression guard for issue #57: an undecodable line costs only its own guess. A
+		strict decoder would fail on the whole buffered chunk and lose the valid lines before
+		and after it, ending the game at the second prompt. 'QQQQ' is in no word, so it can
+		only ever be scored as zero matches."""
+		environment = dict(os.environ)
+		environment["PYTHONIOENCODING"] = "utf-8:strict"
+		output = runScript(b"QQQQ\n\xff\nQQQQ\nQQQQ\nQQQQ\n", environment)
+		self.assertEqual(output.count("That isn't four characters long!"), 1)
+		self.assertEqual(output.count("That had 0 characters in common."), 4)
+		self.assertEqual(output.count("Make your guess."), 5)
+		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
+
+	def test_script_does_not_score_undecodable_four_byte_line(self):
+		"""Regression guard for issue #57: a four-byte line holding an undecodable byte can't
+		be read as text, so it costs one guess under either decoder instead of being scored
+		as four characters where stdin decodes with surrogateescape."""
+		for errors in ("strict", "surrogateescape"):
+			with self.subTest(errors=errors):
+				environment = dict(os.environ)
+				environment["PYTHONIOENCODING"] = "utf-8:" + errors
+				output = runScript(b"\xffQQQ\n", environment)
+				self.assertEqual(output.count("That isn't four characters long!"), 1)
+				self.assertNotIn("in common", output)
+				self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
 	def test_constructor_sets_five_guesses(self):
 		self.assertEqual(guessMyWord.GuessMyWord().guesses, 5)
@@ -317,8 +343,9 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertIn("You got the word! It was DICE", output)
 
 	def test_undecodable_guess_costs_one_guess(self):
-		"""Regression guard for issue #53: a line that cannot be decoded is not a four-character
-		guess, so it costs one guess and the next prompt still accepts a winning guess."""
+		"""Regression guard for issue #53: where input() itself raises, as it still can on a
+		stdin the script does not reconfigure, the line costs one guess and the next prompt
+		still accepts a winning guess."""
 		undecodable = UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
 		output = playGame([undecodable, "DICE"])
 		self.assertIn("That isn't four characters long!", output)
