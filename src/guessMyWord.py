@@ -1,3 +1,5 @@
+import io
+import sys
 from random import randint
 
 
@@ -19,7 +21,8 @@ class GuessMyWord:
 
 			try:
 				guess = input("\n> ").strip()
-			except UnicodeDecodeError:
+				guess.encode()  # raises on a surrogate standing for an undecodable byte
+			except UnicodeError:
 				guess = ""
 			except (EOFError, KeyboardInterrupt):
 				print()
@@ -50,5 +53,8 @@ class GuessMyWord:
 			print("\nThe word was", wordToGuess)
 
 if __name__ == "__main__":
+	# A strict decoder would lose every line buffered alongside an undecodable byte.
+	if isinstance(sys.stdin, io.TextIOWrapper):
+		sys.stdin.reconfigure(errors="surrogateescape")
 	guessMyWord = GuessMyWord()
 	guessMyWord.run()
