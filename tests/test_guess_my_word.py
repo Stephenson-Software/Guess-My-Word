@@ -79,6 +79,26 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertNotIn("That isn't four characters long!", output)
 		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
+	@unittest.skipUnless(hasattr(os, "fork"), "needs preexec_fn to start the script with a stream closed")
+	def test_script_ends_cleanly_with_a_standard_stream_closed(self):
+		"""Regression guard for issue #59: input() raises RuntimeError when a standard stream
+		was closed at startup. The script ends as it does at end of input, exiting normally.
+		Each stream is closed in the child after subprocess has set up its pipes."""
+		for name, descriptor in (("stdin", 0), ("stdout", 1), ("stderr", 2)):
+			with self.subTest(stream=name):
+				result = subprocess.run(
+					[sys.executable, "-B", os.path.join(SRC_DIR, "guessMyWord.py")],
+					stdin=subprocess.DEVNULL,
+					stdout=subprocess.PIPE,
+					stderr=subprocess.PIPE,
+					preexec_fn=lambda: os.close(descriptor),
+					timeout=30,
+				)
+				self.assertEqual(result.returncode, 0, result.stderr.decode())
+				self.assertEqual(result.stderr, b"")
+				if name != "stdout":
+					self.assertIn(revealedWord(result.stdout.decode()), guessMyWord.GuessMyWord().words)
+
 	def test_script_survives_undecodable_input(self):
 		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
 		the real input() must not raise even where stdin is strict by default. The script
@@ -356,6 +376,13 @@ class TestGuessMyWord(unittest.TestCase):
 		"""Regression guard for issue #9: running out of input after one guess ends the
 		game with the closing message rather than raising EOFError."""
 		output = playGame(["LIKE", EOFError()])
+		self.assertIn("That had 2 characters in common.", output)
+		self.assertIn("The word was DICE", output)
+
+	def test_closed_stream_ends_game_cleanly(self):
+		"""Regression guard for issue #59: a stream lost after one guess ends the game with
+		the closing message rather than raising RuntimeError."""
+		output = playGame(["LIKE", RuntimeError("input(): lost sys.stdin")])
 		self.assertIn("That had 2 characters in common.", output)
 		self.assertIn("The word was DICE", output)
 

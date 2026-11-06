@@ -24,7 +24,7 @@ class GuessMyWord:
 				guess.encode()  # raises on a surrogate standing for an undecodable byte
 			except UnicodeError:
 				guess = ""
-			except (EOFError, KeyboardInterrupt):
+			except (EOFError, KeyboardInterrupt, RuntimeError):  # RuntimeError: input() found a standard stream closed
 				print()
 				break
 
