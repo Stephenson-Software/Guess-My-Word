@@ -9,7 +9,7 @@ Run the game from the repository root with Python 3. There are no third-party de
 ```
 python3 src/guessMyWord.py
 ```
-Ending input (Ctrl-D, or the end of piped input) or pressing Ctrl-C ends the game early and reveals the word.
+Ending input (Ctrl-D, the end of piped input, or a closed standard stream) or pressing Ctrl-C ends the game early and reveals the word.
 
 ## Play in your browser
 The same game, unmodified, runs in a browser tab under [tak](https://github.com/Stephenson-Software/tak)'s console runtime (Python via Pyodide): https://guess-my-word.play.danielstephenson.dev, listed with the rest at [danielstephenson.dev/play](https://danielstephenson.dev/play). To build and serve it locally (needs `tak` installed):
