@@ -99,6 +99,28 @@ class TestGuessMyWord(unittest.TestCase):
 				if name != "stdout":
 					self.assertIn(revealedWord(result.stdout.decode()), guessMyWord.GuessMyWord().words)
 
+	def test_script_exits_quietly_when_output_reader_is_gone(self):
+		"""Regression guard for issue #60: a reader that stops reading is not an error, so the
+		script exits normally and prints nothing to stderr. Buffered, the failure only appears
+		when stdout is flushed at the end of the game; with -u, a print() inside run() raises.
+		The read end is closed up front, so no timing is involved."""
+		for flags in ([], ["-u"]):
+			with self.subTest(flags=flags):
+				readEnd, writeEnd = os.pipe()
+				os.close(readEnd)
+				try:
+					result = subprocess.run(
+						[sys.executable, "-B"] + flags + [os.path.join(SRC_DIR, "guessMyWord.py")],
+						input=b"QQQQ\n" * 5,
+						stdout=writeEnd,
+						stderr=subprocess.PIPE,
+						timeout=30,
+					)
+				finally:
+					os.close(writeEnd)
+				self.assertEqual(result.returncode, 0, result.stderr.decode())
+				self.assertEqual(result.stderr, b"")
+
 	def test_script_survives_undecodable_input(self):
 		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
 		the real input() must not raise even where stdin is strict by default. The script
