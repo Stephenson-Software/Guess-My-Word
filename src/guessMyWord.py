@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 from random import randint
 
@@ -57,4 +58,11 @@ if __name__ == "__main__":
 	if isinstance(sys.stdin, io.TextIOWrapper):
 		sys.stdin.reconfigure(errors="surrogateescape")
 	guessMyWord = GuessMyWord()
-	guessMyWord.run()
+	try:
+		guessMyWord.run()
+		if sys.stdout is not None:  # None when stdout was closed at startup
+			sys.stdout.flush()  # input() hides a failed flush, and the one at shutdown can't be caught
+	except BrokenPipeError:
+		# The reader left, which isn't an error here. Python flushes stdout again at shutdown,
+		# so it is pointed at devnull rather than left to fail there.
+		os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
