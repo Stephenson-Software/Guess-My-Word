@@ -67,8 +67,8 @@ if __name__ == "__main__":
 		# so it is pointed at devnull rather than left to fail there.
 		os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
 	except OSError as error:
-		# Any other failed write (a full disk, say) lost output, so it is reported in one line
-		# with a failing exit status. stdout goes to devnull so shutdown doesn't fail again.
+		# Any other failed write (a full disk, say) or read lost the game, so it is reported in
+		# one line with a failing exit status. stdout goes to devnull so shutdown doesn't fail again.
 		if sys.stdout is not None:
 			os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
 		sys.exit("guessMyWord.py: " + (error.strerror or str(error)))
