@@ -121,6 +121,25 @@ class TestGuessMyWord(unittest.TestCase):
 				self.assertEqual(result.returncode, 0, result.stderr.decode())
 				self.assertEqual(result.stderr, b"")
 
+	@unittest.skipUnless(os.path.exists("/dev/full"), "needs /dev/full to make every write fail")
+	def test_script_reports_a_failed_write_in_one_line(self):
+		"""Regression guard for issue #66: output lost to a full disk is a real failure, so the
+		script exits with status 1 and a single line on stderr, with no traceback and no second
+		message from the flush at shutdown. Buffered, the write fails at the final flush; with
+		-u, a print() inside run() raises."""
+		for flags in ([], ["-u"]):
+			with self.subTest(flags=flags):
+				with open("/dev/full", "wb") as full:
+					result = subprocess.run(
+						[sys.executable, "-B"] + flags + [os.path.join(SRC_DIR, "guessMyWord.py")],
+						input=b"QQQQ\n" * 5,
+						stdout=full,
+						stderr=subprocess.PIPE,
+						timeout=30,
+					)
+				self.assertEqual(result.returncode, 1, result.stderr.decode())
+				self.assertEqual(result.stderr, b"guessMyWord.py: No space left on device\n")
+
 	def test_script_survives_undecodable_input(self):
 		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
 		the real input() must not raise even where stdin is strict by default. The script
