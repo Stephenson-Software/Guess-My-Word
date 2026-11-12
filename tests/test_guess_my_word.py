@@ -176,6 +176,17 @@ class TestGuessMyWord(unittest.TestCase):
 				self.assertNotIn("in common", output)
 				self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
 
+	def test_script_ignores_crlf_and_tabs_around_a_guess(self):
+		"""Regression guard for issue #68: the real input() keeps the carriage return of a
+		Windows line ending ('QQQQ\\r'), so a guesses file saved with CRLF, or one padded with
+		tabs, relies on all surrounding whitespace being stripped, not only spaces. Each line
+		is scored as four characters instead of costing a guess for its length. 'QQQQ' is in
+		no word, so it can only ever be scored as zero matches."""
+		output = runScript(b"QQQQ\r\n" * 3 + b"\tQQQQ\t\r\n" * 2)
+		self.assertNotIn("That isn't four characters long!", output)
+		self.assertEqual(output.count("That had 0 characters in common."), 5)
+		self.assertIn(revealedWord(output), guessMyWord.GuessMyWord().words)
+
 	def test_constructor_sets_five_guesses(self):
 		self.assertEqual(guessMyWord.GuessMyWord().guesses, 5)
 
