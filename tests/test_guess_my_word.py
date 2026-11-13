@@ -1,6 +1,8 @@
 import contextlib
 import io
 import os
+import socket
+import struct
 import subprocess
 import sys
 import unittest
@@ -139,6 +141,32 @@ class TestGuessMyWord(unittest.TestCase):
 					)
 				self.assertEqual(result.returncode, 1, result.stderr.decode())
 				self.assertEqual(result.stderr, b"guessMyWord.py: No space left on device\n")
+
+	@unittest.skipUnless(os.name == "posix", "needs a socket to stand in for stdin")
+	def test_script_reports_a_failed_read_in_one_line(self):
+		"""Regression guard for issue #70: input that can't be read is a real failure, like
+		output that can't be written, so the script exits with status 1 and a single line on
+		stderr instead of a traceback. stdin is a TCP connection whose other end was closed
+		with SO_LINGER 0, which resets it, as when a client of a networked game drops; the
+		first read then fails with ECONNRESET."""
+		for flags in ([], ["-u"]):
+			with self.subTest(flags=flags):
+				with socket.socket() as listener:
+					listener.bind(("127.0.0.1", 0))
+					listener.listen(1)
+					with socket.create_connection(listener.getsockname()) as client:
+						server = listener.accept()[0]
+						server.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+						server.close()
+						result = subprocess.run(
+							[sys.executable, "-B"] + flags + [os.path.join(SRC_DIR, "guessMyWord.py")],
+							stdin=client.fileno(),
+							stdout=subprocess.PIPE,
+							stderr=subprocess.PIPE,
+							timeout=30,
+						)
+				self.assertEqual(result.returncode, 1, result.stderr.decode())
+				self.assertEqual(result.stderr, b"guessMyWord.py: Connection reset by peer\n")
 
 	def test_script_survives_undecodable_input(self):
 		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
