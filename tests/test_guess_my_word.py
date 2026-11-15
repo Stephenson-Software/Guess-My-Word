@@ -1,6 +1,8 @@
 import contextlib
 import io
 import os
+import select
+import signal
 import socket
 import struct
 import subprocess
@@ -167,6 +169,36 @@ class TestGuessMyWord(unittest.TestCase):
 						)
 				self.assertEqual(result.returncode, 1, result.stderr.decode())
 				self.assertEqual(result.stderr, b"guessMyWord.py: Connection reset by peer\n")
+
+	@unittest.skipUnless(os.name == "posix", "needs SIGINT to stand in for Ctrl-C")
+	def test_script_ends_cleanly_on_a_real_interrupt(self):
+		"""A real SIGINT at the prompt, as Ctrl-C sends, ends the game like end of input:
+		the word is revealed, the exit status is 0 and nothing reaches stderr. The signal is
+		sent only once the prompt has been read back, and everything after input() prints
+		the prompt is inside the try that catches KeyboardInterrupt, so no timing is involved."""
+		process = subprocess.Popen(
+			[sys.executable, "-B", "-u", os.path.join(SRC_DIR, "guessMyWord.py")],
+			stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+		)
+		try:
+			shown = b""
+			while not shown.endswith(b"\n> "):
+				ready = select.select([process.stdout], [], [], 30)[0]
+				chunk = os.read(process.stdout.fileno(), 1) if ready else b""
+				if not chunk:
+					self.fail("no guess prompt before the interrupt: " + repr(shown))
+				shown += chunk
+			process.send_signal(signal.SIGINT)
+			output, errors = process.communicate(timeout=30)
+		finally:
+			if process.poll() is None:
+				process.kill()
+				process.communicate()
+		self.assertEqual(process.returncode, 0, errors.decode())
+		self.assertEqual(errors, b"")
+		self.assertIn(revealedWord((shown + output).decode()), guessMyWord.GuessMyWord().words)
 
 	def test_script_survives_undecodable_input(self):
 		"""Regression guard for issue #53: byte 0xFF is not valid UTF-8, so reading it through
