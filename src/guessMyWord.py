@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+import unicodedata
 from random import randint
 
 
@@ -23,6 +24,7 @@ class GuessMyWord:
 			try:
 				guess = input("\n> ").strip()
 				guess.encode()  # raises on a surrogate standing for an undecodable byte
+				guess = unicodedata.normalize("NFC", guess)  # an accented letter is one character however it was typed
 			except UnicodeError:
 				guess = ""
 			except (EOFError, KeyboardInterrupt, RuntimeError):  # RuntimeError: input() found a standard stream closed

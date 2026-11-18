@@ -433,6 +433,27 @@ class TestGuessMyWord(unittest.TestCase):
 		self.assertNotIn("That isn't four characters long!", output)
 		self.assertIn("That had 3 characters in common.", output)
 
+	def test_decomposed_accent_is_one_character(self):
+		"""Regression guard for issue #76: 'DÍCE' typed as 'I' plus a combining acute accent
+		(NFD, as macOS input produces) is the same four-character guess as the precomposed
+		'Í', so it is scored with 'Í' as a miss rather than costing a guess as five long."""
+		decomposed = "DÍCE"
+		precomposed = "DÍCE"
+		for guess in (decomposed, precomposed):
+			with self.subTest(guess=ascii(guess)):
+				output = playGame([guess] * 5)
+				self.assertNotIn("That isn't four characters long!", output)
+				self.assertIn("That had 3 characters in common.", output)
+
+	def test_combining_mark_without_precomposed_form_still_counts(self):
+		"""'Q' plus a combining acute accent has no precomposed form, so 'DICQ' with an accent
+		on the 'Q' stays five characters after normalization and costs a guess as the wrong
+		length rather than being scored."""
+		output = playGame(["DICQ́", "DICE"])
+		self.assertIn("That isn't four characters long!", output)
+		self.assertIn("You have 4 guesses.", output)
+		self.assertIn("You got the word! It was DICE", output)
+
 	def test_five_misses_end_game_revealing_word(self):
 		"""Five scored misses spend every guess: the word is revealed and a sixth input,
 		the exact word, is never read (it would otherwise win)."""
