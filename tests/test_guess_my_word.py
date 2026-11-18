@@ -437,8 +437,8 @@ class TestGuessMyWord(unittest.TestCase):
 		"""Regression guard for issue #76: 'DÍCE' typed as 'I' plus a combining acute accent
 		(NFD, as macOS input produces) is the same four-character guess as the precomposed
 		'Í', so it is scored with 'Í' as a miss rather than costing a guess as five long."""
-		decomposed = "DÍCE"
-		precomposed = "DÍCE"
+		decomposed = "DI\u0301CE"
+		precomposed = "D\u00cdCE"
 		for guess in (decomposed, precomposed):
 			with self.subTest(guess=ascii(guess)):
 				output = playGame([guess] * 5)
@@ -449,7 +449,7 @@ class TestGuessMyWord(unittest.TestCase):
 		"""'Q' plus a combining acute accent has no precomposed form, so 'DICQ' with an accent
 		on the 'Q' stays five characters after normalization and costs a guess as the wrong
 		length rather than being scored."""
-		output = playGame(["DICQ́", "DICE"])
+		output = playGame(["DICQ\u0301", "DICE"])
 		self.assertIn("That isn't four characters long!", output)
 		self.assertIn("You have 4 guesses.", output)
 		self.assertIn("You got the word! It was DICE", output)
